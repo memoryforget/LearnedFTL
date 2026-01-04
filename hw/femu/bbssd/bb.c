@@ -26,7 +26,7 @@ static void bb_init(FemuCtrl *n, Error **errp)
 
 static void reset_stat(struct ssd *ssd)
 {
-    // struct statistics *st = &ssd->stat;
+    struct statistics *st = &ssd->stat;
 
     /*FTL*/
     // st->read_joule = 0;
@@ -60,21 +60,36 @@ static void reset_stat(struct ssd *ssd)
     // count_segments(ssd);
 
     /*LearnedFTL*/
-    // st->cmt_hit_cnt = 0;
-    // st->cmt_miss_cnt = 0;
-    // st->cmt_hit_ratio = 0;
-    // st->access_cnt = 0;
-    // st->model_hit_num = 0;
-    // st->model_use_num = 0;
-    // st->read_joule = 0;
-    // st->write_joule = 0;
-    // st->erase_joule = 0;
-    // st->joule = 0;
+     st->cmt_hit_cnt = 0;
+     st->cmt_miss_cnt = 0;
+     st->cmt_hit_ratio = 0;
+     st->access_cnt = 0;
+     st->model_hit_num = 0;
+     st->model_use_num = 0;
+     // 1. GC 相关变量置0
+     st->gc_times = 0;
+     st->GC_time = 0;
+    
+     // 2. 模型训练相关变量置0
+     st->model_training_nums = 0;
+     st->sort_time = 0;
+     st->calculate_time = 0;
+    
+     // 3. 读写时延相关变量置0
+     st->read_time = 0;
+     st->write_time = 0;
+     st->access_cnt = 0;
+     st->write_num = 0;
+     
+     st->read_joule = 0;
+     st->write_joule = 0;
+     st->erase_joule = 0;
+     st->joule = 0;
 }
 
 static void print_stat(struct ssd *ssd)
 {
-    // struct statistics *st = &ssd->stat;
+    struct statistics *st = &ssd->stat;
     
     /*ftl*/
     // st->joule = st->read_joule + st->write_joule + st->erase_joule;
@@ -112,14 +127,41 @@ static void print_stat(struct ssd *ssd)
     // count_segments(ssd);
 
     /*LearnedFTL*/
-    // st->joule = st->read_joule + st->write_joule + st->erase_joule;
-    // printf("total cnt: %lld\n", (long long)ssd->stat.access_cnt);
-    // printf("cmt cnt: %lld\n", (long long)ssd->stat.cmt_hit_cnt);
-    // printf("model cnt: %lld\n", (long long)ssd->stat.model_hit_num);
-    // printf("read joule: %Lf\n", st->read_joule);
-    // printf("write joule: %Lf\n", st->write_joule);
-    // printf("erase joule: %Lf\n", st->erase_joule);
-    // printf("All joule: %Lf\n", st->joule);
+     st->joule = st->read_joule + st->write_joule + st->erase_joule;
+     printf("total cnt: %lld\n", (long long)ssd->stat.access_cnt);
+     printf("cmt cnt: %lld\n", (long long)ssd->stat.cmt_hit_cnt);
+     printf("model cnt: %lld\n", (long long)ssd->stat.model_hit_num);
+     // === 新增打印内容 ===
+     // 1. GC 相关结果
+     printf("GC Trigger Count: %llu\n", (long long)st->gc_times); // GC触发次数
+     printf("GC Total Time (ns): %lld\n", (long long)st->GC_time); // GC总耗时
+    
+     // 2. 模型训练相关结果
+     printf("Model Training Count: %lld\n", (long long)st->model_training_nums); // 模型训练次数
+     printf("Model Sort Time (ns): %lld\n", (long long)st->sort_time); // 排序耗时
+     printf("Model Calc Time (ns): %lld\n", (long long)st->calculate_time); // 计算耗时
+    
+     // 3. 读写时延相关结果
+     printf("Total Read Latency (ns): %lld\n", (long long)st->read_time); // 总读时延
+     printf("Total Write Latency (ns): %lld\n", (long long)st->write_time); // 总写时延
+    
+     // 如果需要平均时延，可以这样计算（需防止除零）:
+     /*
+     if (st->access_cnt > 0)
+        printf("Avg Read Latency (ns): %lld\n", (long long)(st->read_time / st->access_cnt));
+     if (st->write_num > 0)
+        printf("Avg Write Latency (ns): %lld\n", (long long)(st->write_time / st->write_num)); 
+     */
+     // 修改平均时延计算
+     if (st->req_read_cnt > 0)
+     	printf("Avg Read Latency (ns): %lld\n", (long long)(st->read_time / st->req_read_cnt));
+     //                 
+     if (st->req_write_cnt > 0)
+     	printf("Avg Write Latency (ns): %lld\n", (long long)(st->write_time / st->req_write_cnt));
+     printf("read joule: %Lf\n", st->read_joule);
+     printf("write joule: %Lf\n", st->write_joule);
+     printf("erase joule: %Lf\n", st->erase_joule);
+     printf("All joule: %Lf\n", st->joule);
 }
 
 static void bb_flip(FemuCtrl *n, NvmeCmd *cmd)

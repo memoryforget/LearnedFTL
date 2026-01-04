@@ -20,9 +20,9 @@ enum {
     NAND_WRITE = 1,
     NAND_ERASE = 2,
 
-    NAND_READ_LATENCY = 40000,
-    NAND_PROG_LATENCY =  200000,
-    NAND_ERASE_LATENCY = 2000000,
+    NAND_READ_LATENCY = 85000,
+    NAND_PROG_LATENCY =  1650000,
+    NAND_ERASE_LATENCY = 10000000,
 };
 
 enum {
@@ -347,31 +347,33 @@ struct ht {
 };
 
 struct statistics {
-    uint64_t cmt_hit_cnt;
-    uint64_t cmt_miss_cnt;
+    volatile uint64_t req_read_cnt;  // 新增：专门统计用户读请求个数
+    volatile uint64_t req_write_cnt; // 新增：专门统计用户写请求个数
+    volatile uint64_t cmt_hit_cnt;
+    volatile uint64_t cmt_miss_cnt;
     double cmt_hit_ratio;
-    uint64_t access_cnt;
-    uint64_t model_hit_num;
-    uint64_t model_use_num;
-    uint64_t model_out_range;
-    uint64_t max_lpn;
-    uint64_t min_lpn;
-    uint64_t req_num;
-    long double average_lat;
-    uint64_t gc_times;
-    uint64_t write_num;
-    uint64_t line_gc_times[512];
-    uint64_t wp_victims[512];
-    uint64_t trans_wp_gc_times;
-    uint64_t line_wp_gc_times;
-    long long calculate_time;
-    long long sort_time;
-    long long predict_time;
-    long long GC_time;
-    long long write_time;
-    long long read_time;
-    long long model_training_nums;
-    int gc_cnt;
+    volatile uint64_t access_cnt;
+    volatile uint64_t model_hit_num;
+    volatile uint64_t model_use_num;
+    volatile uint64_t model_out_range;
+    volatile uint64_t max_lpn;
+    volatile uint64_t min_lpn;
+    volatile uint64_t req_num;
+    volatile long double average_lat;
+    volatile uint64_t gc_times;
+    volatile uint64_t write_num;
+    volatile uint64_t line_gc_times[512];
+    volatile uint64_t wp_victims[512];
+    volatile uint64_t trans_wp_gc_times;
+    volatile uint64_t line_wp_gc_times;
+    volatile long long calculate_time;
+    volatile long long sort_time;
+    volatile long long predict_time;
+    volatile long long GC_time;
+    volatile long long write_time;
+    volatile long long read_time;
+    volatile long long model_training_nums;
+    volatile int gc_cnt;
     // uint64_t max_read_lpn;
     // uint64_t min_read_lpn;
     // uint64_t max_write_lpn;
