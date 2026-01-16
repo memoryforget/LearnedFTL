@@ -80,6 +80,9 @@ static void reset_stat(struct ssd *ssd)
      st->write_time = 0;
      st->access_cnt = 0;
      st->write_num = 0;
+     // 新增：清空计算平均时延所需的请求计数变量
+     st->req_read_cnt = 0;   // 读请求总数
+     st->req_write_cnt = 0;  // 写请求总数 
      
      st->read_joule = 0;
      st->write_joule = 0;
@@ -131,6 +134,21 @@ static void print_stat(struct ssd *ssd)
      printf("total cnt: %lld\n", (long long)ssd->stat.access_cnt);
      printf("cmt cnt: %lld\n", (long long)ssd->stat.cmt_hit_cnt);
      printf("model cnt: %lld\n", (long long)ssd->stat.model_hit_num);
+     // 计算命中率（核心补充部分）
+     long long total_cnt = (long long)ssd->stat.access_cnt;
+     long long hit_cnt_sum = (long long)ssd->stat.cmt_hit_cnt + (long long)ssd->stat.model_hit_num;
+     double hit_rate = 0.0;
+     
+     // 关键：处理除数为0的情况，避免除以0导致程序崩溃
+     if (total_cnt > 0) {
+         // 强制浮点运算（注意加 1.0 转为浮点数，否则整数除法会丢失精度）
+         hit_rate = (double)hit_cnt_sum / total_cnt;
+     } else {
+         printf("Warning: total access cnt is 0, hit rate is 0\n");
+     }
+     
+     // 打印命中率（保留4位小数，也可根据需要调整精度）
+     printf("hit rate: %.4f (%.2f%%)\n", hit_rate, hit_rate * 100);
      // === 新增打印内容 ===
      // 1. GC 相关结果
      printf("GC Trigger Count: %llu\n", (long long)st->gc_times); // GC触发次数
@@ -158,6 +176,24 @@ static void print_stat(struct ssd *ssd)
      //                 
      if (st->req_write_cnt > 0)
      	printf("Avg Write Latency (ns): %lld\n", (long long)(st->write_time / st->req_write_cnt));
+     // 新增：计算并打印总平均时延（核心补充）
+     // 1. 先定义临时变量，避免重复计算，代码更清晰
+     long long total_time = (long long)st->read_time + (long long)st->write_time; // 总时延
+     long long total_req_cnt = st->req_read_cnt + st->req_write_cnt; // 总请求数
+
+     // 2. 计算总平均时延（必须判断总请求数是否为0，防止除零错误）
+     if (total_req_cnt > 0) {
+        // 注意：如果用整数除法，结果会取整；若需要更精确的小数，可改用double类型
+        long long avg_total_latency = total_time / total_req_cnt;
+        printf("Avg Total Latency (ns): %lld\n", avg_total_latency);
+
+        // 可选：如果需要保留小数的高精度总平均时延（比如显示 1234.56 ns）
+        double avg_total_latency_float = (double)total_time / total_req_cnt;
+        printf("Avg Total Latency (ns, float): %.2f\n", avg_total_latency_float);
+     } else {
+        // 总请求数为0时的友好提示，避免程序崩溃
+        printf("Warning: Total request count (read+write) is 0, skip avg total latency calculation\n");
+     } 
      printf("read joule: %Lf\n", st->read_joule);
      printf("write joule: %Lf\n", st->write_joule);
      printf("erase joule: %Lf\n", st->erase_joule);

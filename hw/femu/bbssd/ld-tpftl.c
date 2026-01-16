@@ -754,7 +754,7 @@ static void ssd_init_params(struct ssdparams *spp)
     //spp->blks_per_pl = 256; /* 32GB */
     //spp->blks_per_pl = 32;
     //spp->blks_per_pl = 128;/*16GB*/
-    spp->blks_per_pl = 2048;
+    spp->blks_per_pl = 64;
     spp->pls_per_lun = 1;
     spp->luns_per_ch = 8;   /* default 8 */
     spp->nchs = 8;          /* default 8 */
@@ -812,9 +812,9 @@ static void ssd_init_params(struct ssdparams *spp)
     printf("total pages: %d\n", spp->tt_line_wps);
 
     spp->tt_gtd_size = spp->tt_pgs / spp->ents_per_pg;
-    // spp->tt_cmt_size = 16384;
+    // spp->tt_cmt_size = 16384;4G
     // spp->tt_cmt_size = 65536;
-    spp->tt_cmt_size = 1048576;
+    spp->tt_cmt_size = 32768;
     spp->enable_request_prefetch = true;    /* cannot set false! */
     spp->enable_select_prefetch = true;
 
