@@ -1019,6 +1019,8 @@ static void ssd_init_statistics(struct ssd *ssd)
     st->write_joule = 0;
     st->erase_joule = 0;
     st->joule = 0;
+    // === 新增：初始化时间 ===
+    clock_gettime(CLOCK_MONOTONIC, &st->start_time);
 }
 
 void ssd_init(FemuCtrl *n)

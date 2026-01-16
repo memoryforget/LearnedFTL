@@ -60,6 +60,8 @@ static void reset_stat(struct ssd *ssd)
     // count_segments(ssd);
 
     /*LearnedFTL*/
+     // === 新增：重置统计开始时间 ===
+     clock_gettime(CLOCK_MONOTONIC, &st->start_time);
      st->cmt_hit_cnt = 0;
      st->cmt_miss_cnt = 0;
      st->cmt_hit_ratio = 0;
@@ -193,7 +195,33 @@ static void print_stat(struct ssd *ssd)
      } else {
         // 总请求数为0时的友好提示，避免程序崩溃
         printf("Warning: Total request count (read+write) is 0, skip avg total latency calculation\n");
-     } 
+     }
+     // === 修改开始：IOPS 计算逻辑 ===
+     struct timespec current_time;
+     clock_gettime(CLOCK_MONOTONIC, &current_time);
+     
+     // 计算经过的时间（秒），注意纳秒部分的转换
+     double elapsed_sec = (current_time.tv_sec - st->start_time.tv_sec) + (current_time.tv_nsec - st->start_time.tv_nsec) / 1000000000.0;
+     // 获取总请求数（读+写）
+     uint64_t total_req = st->req_read_cnt + st->req_write_cnt;
+    
+     double iops = 0.0;
+     double read_iops = 0.0;
+     double write_iops = 0.0;
+
+     if (elapsed_sec > 0) {
+        iops = (double)total_req / elapsed_sec;
+        read_iops = (double)st->req_read_cnt / elapsed_sec;
+        write_iops = (double)st->req_write_cnt / elapsed_sec;
+     }
+
+     printf("---------------- Performance Statistics ----------------\n");
+     printf("Elapsed Time : %.4f sec\n", elapsed_sec);
+     printf("Total Requests: %lu (Read: %lu, Write: %lu)\n", total_req, st->req_read_cnt, st->req_write_cnt);
+     printf("Total IOPS    : %.2f\n", iops);
+     printf("Read IOPS     : %.2f\n", read_iops);
+     printf("Write IOPS    : %.2f\n", write_iops);
+     printf("--------------------------------------------------------\n");
      printf("read joule: %Lf\n", st->read_joule);
      printf("write joule: %Lf\n", st->write_joule);
      printf("erase joule: %Lf\n", st->erase_joule);

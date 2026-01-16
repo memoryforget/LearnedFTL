@@ -349,6 +349,8 @@ struct ht {
 struct statistics {
     volatile uint64_t req_read_cnt;  // 新增：专门统计用户读请求个数
     volatile uint64_t req_write_cnt; // 新增：专门统计用户写请求个数
+    // === 新增：记录统计开始的时间 ===
+    struct timespec start_time;
     volatile uint64_t cmt_hit_cnt;
     volatile uint64_t cmt_miss_cnt;
     double cmt_hit_ratio;
